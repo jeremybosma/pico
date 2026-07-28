@@ -1,0 +1,264 @@
+{
+  "format": "pico-chess-int8",
+  "version": 1,
+  "sha256": "cf457c01889b72c72855b50fc816f5bb71ea98578c7d05df4732eea49ac7602e",
+  "parameterCount": 89444,
+  "architecture": {
+    "boardSize": 8,
+    "inputPlaneCount": 17,
+    "trunkChannelCount": 32,
+    "residualBlockCount": 4,
+    "fromMoveCount": 64,
+    "toMoveCount": 64,
+    "valueChannelCount": 2,
+    "valueHiddenCount": 64
+  },
+  "tensors": {
+    "stem.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        17
+      ],
+      "dataOffset": 0,
+      "scaleOffset": 4896
+    },
+    "stem.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 5024
+    },
+    "residual.0.first.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 5152,
+      "scaleOffset": 14368
+    },
+    "residual.0.first.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 14496
+    },
+    "residual.0.second.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 14624,
+      "scaleOffset": 23840
+    },
+    "residual.0.second.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 23968
+    },
+    "residual.1.first.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 24096,
+      "scaleOffset": 33312
+    },
+    "residual.1.first.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 33440
+    },
+    "residual.1.second.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 33568,
+      "scaleOffset": 42784
+    },
+    "residual.1.second.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 42912
+    },
+    "residual.2.first.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 43040,
+      "scaleOffset": 52256
+    },
+    "residual.2.first.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 52384
+    },
+    "residual.2.second.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 52512,
+      "scaleOffset": 61728
+    },
+    "residual.2.second.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 61856
+    },
+    "residual.3.first.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 61984,
+      "scaleOffset": 71200
+    },
+    "residual.3.first.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 71328
+    },
+    "residual.3.second.weight": {
+      "dtype": "int8",
+      "shape": [
+        32,
+        3,
+        3,
+        32
+      ],
+      "dataOffset": 71456,
+      "scaleOffset": 80672
+    },
+    "residual.3.second.bias": {
+      "dtype": "float32",
+      "shape": [
+        32
+      ],
+      "dataOffset": 80800
+    },
+    "to.convolution.weight": {
+      "dtype": "int8",
+      "shape": [
+        1,
+        1,
+        1,
+        32
+      ],
+      "dataOffset": 80928,
+      "scaleOffset": 80960
+    },
+    "to.convolution.bias": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "dataOffset": 80964
+    },
+    "from.linear.weight": {
+      "dtype": "int8",
+      "shape": [
+        64,
+        32
+      ],
+      "dataOffset": 80968,
+      "scaleOffset": 83016
+    },
+    "from.linear.bias": {
+      "dtype": "float32",
+      "shape": [
+        64
+      ],
+      "dataOffset": 83272
+    },
+    "value.convolution.weight": {
+      "dtype": "int8",
+      "shape": [
+        2,
+        1,
+        1,
+        32
+      ],
+      "dataOffset": 83528,
+      "scaleOffset": 83592
+    },
+    "value.convolution.bias": {
+      "dtype": "float32",
+      "shape": [
+        2
+      ],
+      "dataOffset": 83600
+    },
+    "value.hidden.weight": {
+      "dtype": "int8",
+      "shape": [
+        64,
+        128
+      ],
+      "dataOffset": 83608,
+      "scaleOffset": 91800
+    },
+    "value.hidden.bias": {
+      "dtype": "float32",
+      "shape": [
+        64
+      ],
+      "dataOffset": 92056
+    },
+    "value.output.weight": {
+      "dtype": "int8",
+      "shape": [
+        1,
+        64
+      ],
+      "dataOffset": 92312,
+      "scaleOffset": 92376
+    },
+    "value.output.bias": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "dataOffset": 92380
+    }
+  }
+}

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-source-serif);
+  --font-mono: var(--font-inter);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes spinner-line-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes chess-piece-place {
+  0% {
+    opacity: 0;
+    translate: 0 10%;
+    scale: 0.86;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes pico-invalid-move {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: calc(var(--pico-invalid-move-offset) * -1);
+  }
+  75% {
+    translate: var(--pico-invalid-move-offset);
+  }
+}
+
+.chess-piece-placement {
+  animation: 0.42s cubic-bezier(0.2, 0.85, 0.3, 1.25) both chess-piece-place;
+}
+
+.pico-invalid-move {
+  animation-name: pico-invalid-move;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chess-piece-placement,
+  .pico-invalid-move {
+    animation: none;
+  }
+}
+
+::selection {
+  background: #d4d4d4;
+}
