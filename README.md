@@ -2,7 +2,7 @@
 
 A cute chess-playing model.
 
-Pico v1 is an 89,444-parameter policy and value network for chess. Its 90 KB INT8 weights run entirely in the browser. Pico was distilled from [Stockfish 18](https://stockfishchess.org/) using teacher MultiPV labels on positions from Stockfish’s own games.
+Pico v1 is an 89,444-parameter policy and value network for chess. Its 90 KB INT8 weights run entirely in the browser with 64-visit PUCT search. Pico was distilled from [Stockfish 18](https://stockfishchess.org/) MultiPV labels — an amateur-level toy student, not Stockfish in the browser.
 
 Inspired by [Moka](https://million.dev/moka) — the same idea for Go.
 
@@ -15,11 +15,11 @@ Inspired by [Moka](https://million.dev/moka) — the same idea for Go.
 | Pico v1 · INT8 | 90 KB | ~8 KB | ~98 KB |
 | Stockfish 18 · full WASM | 110 MB | 20 KB | 110 MB |
 
-Pico’s browser path is about 1,100× smaller than shipping Stockfish itself. The point is not to replace Stockfish. It is to put a learned chess player inside an ordinary webpage.
+Pico’s browser path is about 1,100× smaller than shipping Stockfish itself. The point is the payload experiment — distilled net plus light search — not Elo.
 
 ## Browser runtime
 
-Pico runs inference in a Web Worker with a hand-written TypeScript forward pass (no ONNX Runtime, no Stockfish WASM).
+Pico runs inference and PUCT search in a Web Worker with a hand-written TypeScript forward pass (no ONNX Runtime, no Stockfish WASM).
 
 ```bash
 bun install
@@ -36,10 +36,10 @@ Requires [uv](https://github.com/astral-sh/uv) and Stockfish 18 (`brew install s
 uv sync
 
 # Label positions with the full Stockfish teacher
-uv run chess-generate --positions 20000 --depth 8 --multipv 12
+uv run chess-generate --positions 50000 --depth 8 --multipv 12
 
 # Train the student
-uv run chess-train --data data/stockfish-distillation.npz --epochs 30
+uv run chess-train --data data/stockfish-distillation.npz --epochs 40
 
 # Export INT8 browser weights → model/ and public/model/
 uv run chess-export

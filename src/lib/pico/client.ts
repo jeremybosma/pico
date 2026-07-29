@@ -1,4 +1,6 @@
+import type { PicoUciMove } from "./moves";
 import type { PicoManifest } from "./runtime";
+import { DEFAULT_PLAY_VISITS } from "./search";
 
 export type PicoMoveScores = {
   fromLogits: Float32Array;
@@ -6,10 +8,25 @@ export type PicoMoveScores = {
   value: number;
 };
 
-type Pending = {
+export type PicoSearchResult = {
+  bestMove: PicoUciMove | null;
+  whiteValue: number;
+  visits: number;
+};
+
+type PendingInfer = {
+  kind: "infer";
   resolve: (value: PicoMoveScores) => void;
   reject: (error: Error) => void;
 };
+
+type PendingSearch = {
+  kind: "search";
+  resolve: (value: PicoSearchResult) => void;
+  reject: (error: Error) => void;
+};
+
+type Pending = PendingInfer | PendingSearch;
 
 export class PicoClient {
   private worker: Worker;
@@ -24,12 +41,21 @@ export class PicoClient {
       const data = event.data;
       if (data.type === "result") {
         const pending = this.pending.get(data.id);
-        if (!pending) return;
+        if (!pending || pending.kind !== "infer") return;
         this.pending.delete(data.id);
         pending.resolve({
           fromLogits: data.fromLogits,
           toLogits: data.toLogits,
           value: data.value,
+        });
+      } else if (data.type === "search-result") {
+        const pending = this.pending.get(data.id);
+        if (!pending || pending.kind !== "search") return;
+        this.pending.delete(data.id);
+        pending.resolve({
+          bestMove: data.bestMove,
+          whiteValue: data.whiteValue,
+          visits: data.visits,
         });
       } else if (data.type === "error") {
         if (data.id !== undefined) {
@@ -83,13 +109,24 @@ export class PicoClient {
     await this.readyPromise;
     const id = this.nextId++;
     return new Promise<PicoMoveScores>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      // Copy so the worker owns a transferable buffer without detaching caller state
+      this.pending.set(id, { kind: "infer", resolve, reject });
       const copy = new Float32Array(features);
       this.worker.postMessage(
         { type: "infer", id, features: copy },
         { transfer: [copy.buffer] },
       );
+    });
+  }
+
+  async search(
+    fen: string,
+    visits: number = DEFAULT_PLAY_VISITS,
+  ): Promise<PicoSearchResult> {
+    await this.readyPromise;
+    const id = this.nextId++;
+    return new Promise<PicoSearchResult>((resolve, reject) => {
+      this.pending.set(id, { kind: "search", resolve, reject });
+      this.worker.postMessage({ type: "search", id, fen, visits });
     });
   }
 

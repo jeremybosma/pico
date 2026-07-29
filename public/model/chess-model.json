@@ -1,7 +1,7 @@
 {
   "format": "pico-chess-int8",
   "version": 1,
-  "sha256": "cf457c01889b72c72855b50fc816f5bb71ea98578c7d05df4732eea49ac7602e",
+  "sha256": "50eb0cf3a312bcc4d2c97c4614a56f223a00698283fccf6bce46870692f5cc81",
   "parameterCount": 89444,
   "architecture": {
     "boardSize": 8,

@@ -71,7 +71,10 @@ def generate_dataset(
 
         count = len(features)
         if count % 100 == 0 or count == position_count:
-            print(f"generated {count:,}/{position_count:,} positions · games {game_id}")
+            print(
+                f"generated {count:,}/{position_count:,} positions · games {game_id}",
+                flush=True,
+            )
 
     return {
         "features": np.asarray(features, dtype=np.float16),
@@ -98,11 +101,14 @@ def main() -> None:
         multipv=args.multipv,
         threads=args.threads,
     ) as teacher:
-        print(f"teacher: {teacher.engine_path} · depth {args.depth} · MultiPV {args.multipv}")
+        print(
+            f"teacher: {teacher.engine_path} · depth {args.depth} · MultiPV {args.multipv}",
+            flush=True,
+        )
         dataset = generate_dataset(teacher, args.positions, args.seed)
 
     np.savez_compressed(args.output, **dataset)
-    print(f"wrote {args.output} ({args.positions:,} positions)")
+    print(f"wrote {args.output} ({args.positions:,} positions)", flush=True)
 
 
 if __name__ == "__main__":

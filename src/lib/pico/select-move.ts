@@ -1,6 +1,7 @@
 import { Chess, type Square } from "chess.js";
-import { indexToSquare } from "./features";
 import type { PicoMoveScores } from "./client";
+import { indexToSquare } from "./features";
+import { movePrior } from "./moves";
 
 export function selectHighestLegalMove(
   chess: Chess,
@@ -11,10 +12,13 @@ export function selectHighestLegalMove(
     null;
 
   for (const move of chess.moves({ verbose: true })) {
-    const fromIndex = squareToIndex(move.from, flip);
-    const toIndex = squareToIndex(move.to, flip);
-    const score =
-      scores.fromLogits[fromIndex]! + scores.toLogits[toIndex]!;
+    const score = movePrior(
+      scores.fromLogits,
+      scores.toLogits,
+      move.from,
+      move.to,
+      flip,
+    );
     if (!best || score > best.score) {
       best = {
         from: move.from,
@@ -27,20 +31,6 @@ export function selectHighestLegalMove(
 
   if (!best) return null;
   return { from: best.from, to: best.to, promotion: best.promotion };
-}
-
-function squareToIndex(square: Square, flip: boolean): number {
-  // Inverse of indexToSquare
-  const file = square.charCodeAt(0) - 97;
-  const rank = Number(square[1]) - 1;
-  let f = file;
-  let r = rank;
-  if (flip) {
-    f = 7 - file;
-    r = 7 - rank;
-  }
-  const row = 7 - r;
-  return row * 8 + f;
 }
 
 export { indexToSquare };

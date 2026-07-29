@@ -4,8 +4,9 @@ import { Chess } from "chess.js";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/spinner";
 import { PicoClient } from "@/lib/pico/client";
-import { encodeFeaturesFromFen } from "@/lib/pico/features";
-import { selectHighestLegalMove } from "@/lib/pico/select-move";
+
+/** Lighter than play (64) so self-play demos stay responsive. */
+const ROLLOUT_VISITS = 24;
 
 type GameResult = "1-0" | "0-1" | "½-½" | "…";
 
@@ -21,59 +22,6 @@ function resultOf(chess: Chess): GameResult {
   if (!chess.isGameOver()) return "…";
   if (chess.isCheckmate()) return chess.turn() === "w" ? "0-1" : "1-0";
   return "½-½";
-}
-
-function sampleLegal(
-  chess: Chess,
-  fromLogits: Float32Array,
-  toLogits: Float32Array,
-  temperature: number,
-): { from: string; to: string; promotion?: "q" } | null {
-  const moves = chess.moves({ verbose: true });
-  if (!moves.length) return null;
-
-  const flip = chess.turn() === "b";
-  const scores = moves.map((move) => {
-    const fromFile = move.from.charCodeAt(0) - 97;
-    const fromRank = Number(move.from[1]) - 1;
-    const toFile = move.to.charCodeAt(0) - 97;
-    const toRank = Number(move.to[1]) - 1;
-    let ff = fromFile;
-    let fr = fromRank;
-    let tf = toFile;
-    let tr = toRank;
-    if (flip) {
-      ff = 7 - fromFile;
-      fr = 7 - fromRank;
-      tf = 7 - toFile;
-      tr = 7 - toRank;
-    }
-    const fromIndex = (7 - fr) * 8 + ff;
-    const toIndex = (7 - tr) * 8 + tf;
-    return fromLogits[fromIndex]! + toLogits[toIndex]!;
-  });
-
-  const max = Math.max(...scores);
-  const weights = scores.map((s) => Math.exp((s - max) / temperature));
-  const sum = weights.reduce((a, b) => a + b, 0);
-  let cursor = Math.random() * sum;
-  for (let i = 0; i < moves.length; i += 1) {
-    cursor -= weights[i]!;
-    if (cursor <= 0) {
-      const move = moves[i]!;
-      return {
-        from: move.from,
-        to: move.to,
-        promotion: move.promotion ? "q" : undefined,
-      };
-    }
-  }
-  const move = moves[moves.length - 1]!;
-  return {
-    from: move.from,
-    to: move.to,
-    promotion: move.promotion ? "q" : undefined,
-  };
 }
 
 export function Rollouts() {
@@ -118,19 +66,20 @@ export function Rollouts() {
         const chess = new Chess();
         let ply = 0;
         const maxPly = 80;
-        const temperature = 0.7 + (index % 5) * 0.08;
+        const diversity = 0.7 + (index % 5) * 0.08;
 
         while (!chess.isGameOver() && ply < maxPly && !abortRef.current) {
-          const scores = await client.infer(encodeFeaturesFromFen(chess.fen()));
-          const choice =
-            Math.random() < 0.15
-              ? sampleLegal(chess, scores.fromLogits, scores.toLogits, temperature)
-              : selectHighestLegalMove(chess, scores);
-          if (!choice) break;
+          // Occasional noise: fewer visits to diversify games.
+          const visits =
+            Math.random() < 0.2
+              ? Math.max(8, Math.floor(ROLLOUT_VISITS * (0.4 + diversity * 0.3)))
+              : ROLLOUT_VISITS;
+          const result = await client.search(chess.fen(), visits);
+          if (!result.bestMove) break;
           const move = chess.move({
-            from: choice.from,
-            to: choice.to,
-            promotion: choice.promotion,
+            from: result.bestMove.from,
+            to: result.bestMove.to,
+            promotion: result.bestMove.promotion,
           });
           if (!move) break;
           ply += 1;
@@ -176,8 +125,8 @@ export function Rollouts() {
         Rollouts
       </h2>
       <p className="text-neutral-700">
-        Run Pico against itself. Each board samples from its move probabilities,
-        so the games diverge.
+        Run Pico against itself with light PUCT search ({ROLLOUT_VISITS} visits).
+        Visit budgets vary slightly so the games diverge.
       </p>
 
       <div className="flex flex-wrap items-center gap-2">

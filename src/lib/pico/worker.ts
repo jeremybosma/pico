@@ -1,4 +1,5 @@
 import { PicoRuntime, type PicoManifest } from "./runtime";
+import { DEFAULT_PLAY_VISITS, runPuctSearch } from "./search";
 
 type InitMessage = {
   type: "init";
@@ -12,7 +13,14 @@ type InferMessage = {
   features: Float32Array;
 };
 
-type InMessage = InitMessage | InferMessage;
+type SearchMessage = {
+  type: "search";
+  id: number;
+  fen: string;
+  visits?: number;
+};
+
+type InMessage = InitMessage | InferMessage | SearchMessage;
 
 let runtime: PicoRuntime | null = null;
 
@@ -25,8 +33,9 @@ self.onmessage = async (event: MessageEvent<InMessage>) => {
       return;
     }
 
+    if (!runtime) throw new Error("Pico not initialized");
+
     if (message.type === "infer") {
-      if (!runtime) throw new Error("Pico not initialized");
       const result = runtime.infer(message.features);
       const fromBuffer = result.fromLogits.buffer as ArrayBuffer;
       const toBuffer = result.toLogits.buffer as ArrayBuffer;
@@ -40,6 +49,22 @@ self.onmessage = async (event: MessageEvent<InMessage>) => {
         },
         { transfer: [fromBuffer, toBuffer] },
       );
+      return;
+    }
+
+    if (message.type === "search") {
+      const result = runPuctSearch(
+        runtime,
+        message.fen,
+        message.visits ?? DEFAULT_PLAY_VISITS,
+      );
+      self.postMessage({
+        type: "search-result",
+        id: message.id,
+        bestMove: result.bestMove,
+        whiteValue: result.whiteValue,
+        visits: result.visits,
+      });
     }
   } catch (error) {
     self.postMessage({

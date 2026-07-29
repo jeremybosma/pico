@@ -40,8 +40,8 @@ export default function Home() {
 
         <article className="space-y-4">
           <p>
-            Pico is a cute, 89K-parameter chess model with 90 KB of INT8 weights
-            and a ~100 KB total browser payload. We distilled it from{" "}
+            Pico is a tiny 89K-parameter student chess net: 90 KB of INT8 weights
+            and a ~100 KB browser payload. It was distilled from{" "}
             <a
               className="text-neutral-600 underline decoration-neutral-400 decoration-1 underline-offset-2 hover:text-neutral-900 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
               href="https://stockfishchess.org/"
@@ -50,8 +50,9 @@ export default function Home() {
             >
               Stockfish 18
             </a>{" "}
-            using teacher MultiPV labels on positions from Stockfish’s own games.
-            Pico runs entirely in a Web Worker — no Stockfish WASM, no ONNX Runtime.
+            MultiPV labels, then plays with 64-visit PUCT search in a Web Worker —
+            not Stockfish WASM, and not engine-strength. Think amateur toy with
+            search, not a browser Stockfish.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -114,9 +115,9 @@ export default function Home() {
               </table>
             </div>
             <p className="text-neutral-700">
-              Pico’s browser path is about 1,100× smaller than the teacher path. The
-              point is not to replace Stockfish. It is to put a learned chess player
-              inside an ordinary webpage.
+              Pico’s browser path is about 1,100× smaller than shipping full Stockfish
+              WASM. The point is the payload experiment — a distilled net plus light
+              search in an ordinary webpage — not Elo.
             </p>
           </section>
 
@@ -127,7 +128,7 @@ export default function Home() {
       </main>
 
       <footer className="mx-auto w-full max-w-2xl px-6 pb-10 font-[family-name:var(--font-inter)] text-xs text-neutral-500">
-        Distilled from Stockfish 18 · UI inspired by{" "}
+        Distilled toy · 64-visit search · UI inspired by{" "}
         <a
           className="underline decoration-neutral-400 underline-offset-2 hover:text-neutral-800"
           href="https://million.dev/moka"

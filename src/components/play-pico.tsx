@@ -6,8 +6,7 @@ import { ChessBoard } from "@/components/chess-board";
 import { EvalBar } from "@/components/eval-bar";
 import { Spinner } from "@/components/spinner";
 import { PicoClient } from "@/lib/pico/client";
-import { encodeFeaturesFromFen } from "@/lib/pico/features";
-import { selectHighestLegalMove } from "@/lib/pico/select-move";
+import { DEFAULT_PLAY_VISITS, terminalEvalFromChess } from "@/lib/pico/search";
 
 type PlayState = "idle" | "playing" | "thinking" | "ended";
 
@@ -24,6 +23,23 @@ function materialCount(chess: Chess) {
     }
   }
   return { white, black };
+}
+
+function applyTerminalOrWhiteValue(
+  chess: Chess,
+  whiteValue: number,
+  setValue: (v: number) => void,
+  setWhitePercent: (v: number) => void,
+) {
+  const terminal = terminalEvalFromChess(chess);
+  if (terminal) {
+    setValue(terminal.value);
+    setWhitePercent(terminal.whitePercent);
+    return;
+  }
+  const clamped = Math.max(-1, Math.min(1, whiteValue));
+  setValue(clamped);
+  setWhitePercent(Math.round(((clamped + 1) / 2) * 100));
 }
 
 export function PlayPico() {
@@ -48,6 +64,7 @@ export function PlayPico() {
   const [whitePercent, setWhitePercent] = useState(50);
   const [hoverPlay, setHoverPlay] = useState(false);
   const [inferMs, setInferMs] = useState<number | null>(null);
+  const [searchVisits, setSearchVisits] = useState<number | null>(null);
 
   const syncBoard = useEffectEvent(() => {
     setFen(chessRef.current.fen());
@@ -65,7 +82,7 @@ export function PlayPico() {
         clientRef.current = client;
         setReady(true);
         setStatus((current) =>
-          current === "Loading Pico…" ? "Ready" : current,
+          current === "Loading Pico…" ? "Ready · 64-visit search" : current,
         );
       } catch (error) {
         if (!cancelled) {
@@ -82,13 +99,6 @@ export function PlayPico() {
     };
   }, []);
 
-  const applyValue = useEffectEvent((sideToMove: "w" | "b", v: number) => {
-    // Model value is for side-to-move; convert to white win %.
-    const whiteValue = sideToMove === "w" ? v : -v;
-    setValue(whiteValue);
-    setWhitePercent(Math.round(((whiteValue + 1) / 2) * 100));
-  });
-
   const engineMove = useEffectEvent(async () => {
     const client = clientRef.current;
     const chess = chessRef.current;
@@ -100,25 +110,30 @@ export function PlayPico() {
 
     try {
       const started = performance.now();
-      const features = encodeFeaturesFromFen(chess.fen());
-      const scores = await client.infer(features);
+      const result = await client.search(chess.fen(), DEFAULT_PLAY_VISITS);
       const elapsed = performance.now() - started;
       if (token !== playToken.current) return;
 
       setInferMs(elapsed);
-      applyValue(chess.turn(), scores.value);
+      setSearchVisits(result.visits);
+      applyTerminalOrWhiteValue(
+        chess,
+        result.whiteValue,
+        setValue,
+        setWhitePercent,
+      );
 
-      const choice = selectHighestLegalMove(chess, scores);
-      if (!choice) {
+      if (!result.bestMove) {
         setPlayState("ended");
         setStatus("Game over");
+        applyTerminalOrWhiteValue(chess, 0, setValue, setWhitePercent);
         return;
       }
 
       const move = chess.move({
-        from: choice.from,
-        to: choice.to,
-        promotion: choice.promotion,
+        from: result.bestMove.from,
+        to: result.bestMove.to,
+        promotion: result.bestMove.promotion,
       });
       if (!move) return;
 
@@ -128,6 +143,7 @@ export function PlayPico() {
       syncBoard();
 
       if (chess.isGameOver()) {
+        applyTerminalOrWhiteValue(chess, 0, setValue, setWhitePercent);
         setPlayState("ended");
         setStatus(endMessage(chess, move.san, playerColor));
       } else {
@@ -178,6 +194,7 @@ export function PlayPico() {
     setPlacedSquare(null);
     setValue(0);
     setWhitePercent(50);
+    setSearchVisits(null);
     syncBoard();
     setPlayState("playing");
     setStatus(color === "w" ? "Your move" : "Pico is thinking…");
@@ -215,6 +232,7 @@ export function PlayPico() {
           setPlacedSquare(move.to);
           syncBoard();
           if (chess.isGameOver()) {
+            applyTerminalOrWhiteValue(chess, 0, setValue, setWhitePercent);
             setPlayState("ended");
             setStatus(endMessage(chess, move.san, playerColor));
           } else {
@@ -249,6 +267,12 @@ export function PlayPico() {
   const moveNo = chess.moveNumber();
   const showOverlay = playState === "idle" || hoverPlay;
   const interactive = playState === "playing";
+  const moveLabel =
+    playState === "ended"
+      ? chess.isCheckmate()
+        ? `Game over · ${chess.turn() === "w" ? "Black" : "White"} wins`
+        : "Game over · draw"
+      : `${moveNo} · ${side} next`;
 
   return (
     <div className="space-y-3">
@@ -366,7 +390,7 @@ export function PlayPico() {
         <div className="min-w-0">
           <dt className="text-xs font-normal text-neutral-500">Move</dt>
           <dd className="truncate text-sm font-normal text-neutral-900">
-            {moveNo} · {side} next
+            {moveLabel}
           </dd>
         </div>
         <div className="min-w-0">
@@ -389,9 +413,11 @@ export function PlayPico() {
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-xs font-normal text-neutral-500">Inference</dt>
+          <dt className="text-xs font-normal text-neutral-500">Search</dt>
           <dd className="truncate text-sm font-normal text-neutral-900">
-            {inferMs !== null ? `${inferMs.toFixed(1)} ms` : "—"}
+            {searchVisits !== null
+              ? `${searchVisits} visits · ${inferMs?.toFixed(0) ?? "—"} ms`
+              : "64-visit PUCT"}
           </dd>
         </div>
         <div className="min-w-0">

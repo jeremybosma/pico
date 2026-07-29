@@ -3,13 +3,14 @@ type EvalBarProps = {
   label?: string;
 };
 
+/** Lichess-style bar: Black on top, White on bottom. Dark fill = White %. */
 export function EvalBar({ whitePercent, label }: EvalBarProps) {
   const white = Math.max(0, Math.min(100, whitePercent));
   const black = 100 - white;
 
   return (
     <div className="flex h-full w-6 shrink-0 flex-col items-center gap-1 font-[family-name:var(--font-inter)] text-xs font-normal text-neutral-500 sm:w-8">
-      <span className="flex items-center gap-0.5">W</span>
+      <span className="flex items-center gap-0.5">B</span>
       <div
         aria-label={label ?? "White win probability"}
         aria-valuemax={100}
@@ -38,7 +39,7 @@ export function EvalBar({ whitePercent, label }: EvalBarProps) {
           {white}
         </span>
       </div>
-      <span className="flex items-center gap-0.5">B</span>
+      <span className="flex items-center gap-0.5">W</span>
     </div>
   );
 }
