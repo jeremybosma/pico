@@ -6,7 +6,9 @@ Pico v1 is an 89,444-parameter policy and value network for chess. Its 90 KB INT
 
 Inspired by [Moka](https://million.dev/moka) — the same idea for Go.
 
-**Play:** [chess.jeremybosma.nl](https://chess.jeremybosma.nl) · **Source:** [github.com/jeremybosma/pico](https://github.com/jeremybosma/pico) · **Weights:** [`model/chess-model.bin`](./model/chess-model.bin)
+**Source:** [github.com/jeremybosma/pico](https://github.com/jeremybosma/pico) · **Weights:** [`model/chess-model.bin`](./model/chess-model.bin)
+
+Run locally with `bun install && bun dev` — there is no hosted deployment.
 
 ## Browser payload
 
